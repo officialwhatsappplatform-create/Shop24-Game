@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dream Store - المتجر</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
+        body { 
+            background: #050505 url('https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?q=80&w=2070&auto=format&fit=crop') no-repeat center center fixed; 
+            background-size: cover; color: #fff; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+        }
+        .bg-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); z-index: -1; }
+        
+        header { 
+            width: 100%; padding: 15px 30px; background: rgba(10, 10, 20, 0.8); backdrop-filter: blur(10px);
+            display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #00f3ff;
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.3); z-index: 10;
+        }
+        header h1 { color: #00f3ff; text-shadow: 0 0 15px #00f3ff; font-weight: 900; letter-spacing: 2px; }
+        
+        .container { width: 95%; max-width: 1200px; margin-top: 30px; display: none; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 25px; }
+        
+        /* كروت المتجر اللي بتلمع */
+        .card { 
+            background: rgba(20, 20, 30, 0.6); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px; padding: 25px; text-align: center; position: relative; overflow: hidden;
+            transition: 0.4s; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .card:hover { transform: translateY(-10px); border-color: #00f3ff; box-shadow: 0 0 30px rgba(0, 243, 255, 0.4); }
+        .card.glow-gold:hover { border-color: #ffd700; box-shadow: 0 0 30px rgba(255, 215, 0, 0.5); }
+        .card.glow-purple:hover { border-color: #b000ff; box-shadow: 0 0 30px rgba(176, 0, 255, 0.5); }
+        
+        .card .icon { font-size: 50px; margin-bottom: 15px; filter: drop-shadow(0 0 10px currentColor); }
+        .card h3 { font-size: 22px; margin-bottom: 10px; }
+        .card .price { font-size: 18px; font-weight: bold; color: #00ff88; margin-bottom: 20px; }
+        
+        button { 
+            background: linear-gradient(45deg, #00f3ff, #0066ff); color: #fff; border: none; padding: 12px 25px;
+            border-radius: 50px; font-weight: bold; font-size: 16px; cursor: pointer; width: 100%;
+            transition: 0.3s; text-shadow: 0 0 5px rgba(0,0,0,0.5); box-shadow: 0 5px 15px rgba(0, 102, 255, 0.4);
+        }
+        button:hover { filter: brightness(1.2); transform: scale(1.05); }
+        
+        /* شاشة تسجيل الدخول */
+        .login-box { 
+            display: flex; flex-direction: column; width: 90%; max-width: 400px; background: rgba(10, 10, 20, 0.9);
+            backdrop-filter: blur(15px); padding: 40px; border-radius: 20px; border: 2px solid #00f3ff;
+            box-shadow: 0 0 40px rgba(0, 243, 255, 0.2); margin-top: 80px;
+        }
+        .login-box h2 { text-align: center; color: #00f3ff; margin-bottom: 30px; }
+        input { 
+            width: 100%; padding: 15px; margin-bottom: 15px; background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; color: #fff; font-size: 16px;
+        }
+        input:focus { outline: none; border-color: #00f3ff; }
+
+        /* لوحة التحكم */
+        #admin-section { display: none; width: 95%; max-width: 900px; }
+        .request-item { 
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .btn-approve { background: #00ff88; color: #000; padding: 8px 20px; width: auto; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+<div class="bg-overlay"></div>
+<header>
+    <h1>DREAM STORE</h1>
+    <div id="user-status" style="font-weight: bold; color: #00f3ff;">جاري التحقق...</div>
+    <button onclick="toggleAdminLogin()" style="width:auto; background: rgba(255,255,255,0.1); border: 1px solid #fff;">لوحة الإدارة ⚙️</button>
+</header>
+
+<!-- تسجيل الدخول للمتجر -->
+<div id="shop-auth" class="login-box">
+    <h2>تسجيل الدخول للمتجر</h2>
+    <input type="text" id="login-user" placeholder="اسم المستخدم (اليوزر)">
+    <input type="password" id="login-pass" placeholder="كلمة المرور">
+    <button onclick="loginShop()">دخول</button>
+    <p id="login-err" style="color: #ff3366; text-align: center; margin-top: 15px; display: none;">بيانات غير صحيحة!</p>
+</div>
+
+<!-- المتجر -->
+<div class="container" id="store-section">
+    <h2 style="margin-bottom: 30px; text-align: center; font-size: 30px; text-shadow: 0 0 10px #fff;">أفضل الباقات الأسطورية 🔥</h2>
+    <div class="grid" id="products-grid"></div>
+</div>
+
+<!-- لوحة الإدارة -->
+<div id="admin-section" style="display: none; margin-top: 30px;">
+    <div class="login-box" id="admin-login-box" style="margin-top: 0;">
+        <h2 style="color: #ffd700;">دخول الإدارة</h2>
+        <input type="text" id="admin-user" placeholder="اسم المستخدم">
+        <input type="password" id="admin-pass" placeholder="كلمة المرور">
+        <button onclick="loginAdmin()" style="background: linear-gradient(45deg, #ffd700, #ff8c00);">دخول الإدارة</button>
+    </div>
+    <div id="admin-dashboard" class="hidden">
+        <h2 style="color: #00ff88; margin-bottom: 20px;">طلبات الشحن المعلقة ⏳</h2>
+        <div id="requests-list"></div>
+        <button onclick="logoutAdmin()" style="background: #ff3366; margin-top: 20px;">خروج الإدارة</button>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getDatabase, ref, push, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyATXRfYw9T7TxxEyMWbTRyfL6s8Op15r_w",
+        authDomain: "myfootdream-9f0cc.firebaseapp.com",
+        databaseURL: "https://myfootdream-9f0cc-default-rtdb.firebaseio.com",
+        projectId: "myfootdream-9f0cc",
+        storageBucket: "myfootdream-9f0cc.firebasestorage.app",
+        messagingSenderId: "318264642937",
+        appId: "1:318264642937:web:c1c99a49ff58a6ca49b3a8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    let currentUser = null;
+
+    // الباقات (أكثر من 10 باقات مميزة)
+    const products = [
+        { name: '1000 كوينز', type: 'coins', amount: 1000, price: '$1', icon: '🪙', class: '' },
+        { name: '5000 كوينز', type: 'coins', amount: 5000, price: '$4', icon: '🪙', class: '' },
+        { name: '10000 كوينز', type: 'coins', amount: 10000, price: '$7', icon: '🪙', class: 'glow-gold' },
+        { name: '500 DFK', type: 'dfk', amount: 500, price: '$5', icon: '💎', class: '' },
+        { name: '2000 DFK', type: 'dfk', amount: 2000, price: '$15', icon: '💎', class: 'glow-purple' },
+        { name: '500 توكن أزرق', type: 'tokens', amount: 500, price: '$10', icon: '🔷', class: '' },
+        { name: 'باقة البرونز', type: 'pack_premium', amount: 1, price: '$2', icon: '🎁', class: '' },
+        { name: 'باقة الفضة', type: 'pack_premium', amount: 1, price: '$5', icon: '🎁', class: '' },
+        { name: 'باقة الذهب', type: 'pack_premium', amount: 1, price: '$10', icon: '🎁', class: 'glow-gold' },
+        { name: 'باقة الأساطير', type: 'pack_premium', amount: 1, price: '$20', icon: '👑', class: 'glow-gold' },
+        { name: 'باقة التحدي', type: 'pack_premium', amount: 1, price: '$15', icon: '🔥', class: 'glow-purple' }
+    ];
+
+    window.loginShop = async () => {
+        const u = document.getElementById('login-user').value.trim();
+        const p = document.getElementById('login-pass').value;
+        try {
+            await signInWithEmailAndPassword(auth, u + "@dreamgame.com", p);
+            document.getElementById('login-err').style.display = 'none';
+        } catch (e) {
+            document.getElementById('login-err').style.display = 'block';
+        }
+    };
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+            document.getElementById('user-status').textContent = `مرحباً: ${user.email.split('@')[0]}`;
+            document.getElementById('shop-auth').classList.add('hidden');
+            document.getElementById('store-section').style.display = 'block';
+            renderStore();
+        } else {
+            document.getElementById('user-status').textContent = 'غير مسجل';
+            document.getElementById('shop-auth').classList.remove('hidden');
+            document.getElementById('store-section').style.display = 'none';
+        }
+    });
+
+    function renderStore() {
+        const grid = document.getElementById('products-grid');
+        grid.innerHTML = '';
+        products.forEach(prod => {
+            grid.innerHTML += `
+                <div class="card ${prod.class}">
+                    <div class="icon">${prod.icon}</div>
+                    <h3>${prod.name}</h3>
+                    <div class="price">${prod.price}</div>
+                    <button onclick="buyProduct('${prod.name}', '${prod.type}', ${prod.amount})">شراء الآن</button>
+                </div>
+            `;
+        });
+    }
+
+    window.buyProduct = (name, type, amount) => {
+        if (!currentUser) return alert('سجل دخول الأول!');
+        if (!confirm(`هل تريد إرسال طلب لشراء: ${name}؟`)) return;
+        
+        const reqRef = push(ref(db, 'requests'));
+        set(reqRef, {
+            userId: currentUser.uid,
+            username: currentUser.email.split('@')[0],
+            itemName: name, type: type, amount: amount,
+            status: 'pending', timestamp: Date.now()
+        }).then(() => {
+            alert('تم إرسال الطلب للإدارة. بمجرد القبول، هتلاقيها في بريدك في اللعبة!');
+        });
+    };
+
+    // --- الإدارة ---
+    window.toggleAdminLogin = () => {
+        document.getElementById('store-section').style.display = 'none';
+        document.getElementById('shop-auth').classList.add('hidden');
+        document.getElementById('admin-section').style.display = 'block';
+    };
+
+    window.loginAdmin = () => {
+        const u = document.getElementById('admin-user').value;
+        const p = document.getElementById('admin-pass').value;
+        if (u === 'GG' && p === 'GG11') {
+            document.getElementById('admin-login-box').classList.add('hidden');
+            document.getElementById('admin-dashboard').classList.remove('hidden');
+            loadRequests();
+        } else alert('بيانات خاطئة!');
+    };
+
+    window.logoutAdmin = () => {
+        document.getElementById('admin-login-box').classList.remove('hidden');
+        document.getElementById('admin-dashboard').classList.add('hidden');
+        document.getElementById('admin-section').style.display = 'none';
+        document.getElementById('shop-auth').classList.remove('hidden');
+    };
+
+    function loadRequests() {
+        onValue(ref(db, 'requests'), (snapshot) => {
+            const data = snapshot.val();
+            const list = document.getElementById('requests-list');
+            list.innerHTML = '';
+            if (!data) { list.innerHTML = '<p>لا توجد طلبات حالياً.</p>'; return; }
+            
+            let hasPending = false;
+            Object.keys(data).forEach(key => {
+                const req = data[key];
+                if (req.status === 'pending') {
+                    hasPending = true;
+                    list.innerHTML += `
+                        <div class="request-item">
+                            <div>
+                                <strong style="color:#00f3ff;">${req.itemName}</strong><br>
+                                <small>اللاعب: ${req.username} (ID: ${req.userId.substring(0,5)}...)</small>
+                            </div>
+                            <button class="btn-approve" onclick="approveReq('${key}', '${req.userId}', '${req.type}', ${req.amount}, '${req.itemName}')">موافقة وإرسال</button>
+                        </div>
+                    `;
+                }
+            });
+            if (!hasPending) list.innerHTML = '<p>لا توجد طلبات معلقة.</p>';
+        });
+    }
+
+    window.approveReq = async (reqId, userId, type, amount, itemName) => {
+        if(!confirm('تأكيد إرسال المكافأة لبريد اللاعب؟')) return;
+        
+        try {
+            // 1. إرسال المكافأة للبريد في اللعبة
+            const mailRef = push(ref(db, `mail/${userId}`));
+            await set(mailRef, {
+                subject: 'تم شحن حسابك بنجاح ✅',
+                content: `تمت إضافة ${itemName} لحسابك.`,
+                reward: { type: type, amount: amount },
+                claimed: false,
+                timestamp: Date.now()
+            });
+
+            // 2. تغيير حالة الطلب
+            await update(ref(db, `requests/${reqId}`), { status: 'approved' });
+            alert('تم القبول! والمكافأة اتبعتت للبريد فوراً.');
+        } catch (e) {
+            alert('خطأ: ' + e.message);
+        }
+    };
+</script>
+</body>
+</html>
